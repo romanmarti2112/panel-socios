@@ -4,173 +4,334 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e1220">
 <title>Panel de Socios</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: header + tabs; pipeline is a kanban of 5 stages that scrolls sideways on phones */
+/* Layout: sticky top bar + views. Clientes = stats, funnel, drag-and-drop board, detail drawer. Dark first. */
 :root{
-  --bg:#f3f4f7; --surface:#ffffff; --fg:#1b2130; --muted:#5d6577; --line:#dde0e8;
-  --accent:#2e55d6; --accent-soft:#e3e9fb; --ok:#1f8a5b; --warn:#b5651d;
-  --display:"Bricolage Grotesque",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --bg:#0e1220; --surface:#161b2e; --surface2:#1d2340; --line:#2a3150; --fg:#eef0f8; --muted:#8f97b5;
+  --accent:#ffb547; --accent-fg:#1a1205; --danger:#ff7a7a; --ok:#5ee08a;
+  --s-lead:#7aa2ff; --s-propuesta:#c58bff; --s-desarrollo:#ffb547; --s-entregado:#4fd1c5; --s-pagado:#5ee08a;
+  --shadow:0 12px 40px rgba(0,0,0,.35);
+  --display:"Bricolage Grotesque",Georgia,serif; --body:"Manrope",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#12151d; --surface:#1b1f2a; --fg:#e7e9ef; --muted:#9aa1b2; --line:#2c3242;
-  --accent:#7d9bff; --accent-soft:#232c48; --ok:#4cc38a; --warn:#e2a05c; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#12151d; --surface:#1b1f2a; --fg:#e7e9ef; --muted:#9aa1b2; --line:#2c3242;
-  --accent:#7d9bff; --accent-soft:#232c48; --ok:#4cc38a; --warn:#e2a05c; color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f4f5fa; --surface:#ffffff; --surface2:#eef0f7; --line:#dfe2ee; --fg:#141a2e; --muted:#5b6383;
+  --accent:#c77700; --accent-fg:#ffffff; --danger:#c92a2a; --ok:#1f9d55;
+  --s-lead:#3d6df2; --s-propuesta:#8b4fd9; --s-desarrollo:#c77700; --s-entregado:#129a8e; --s-pagado:#1f9d55;
+  --shadow:0 12px 40px rgba(20,26,46,.12); color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f4f5fa; --surface:#ffffff; --surface2:#eef0f7; --line:#dfe2ee; --fg:#141a2e; --muted:#5b6383;
+  --accent:#c77700; --accent-fg:#ffffff; --danger:#c92a2a; --ok:#1f9d55;
+  --s-lead:#3d6df2; --s-propuesta:#8b4fd9; --s-desarrollo:#c77700; --s-entregado:#129a8e; --s-pagado:#1f9d55;
+  --shadow:0 12px 40px rgba(20,26,46,.12); color-scheme:light}
+
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body);padding:0 16px}
-.wrap{max-width:1180px;margin:0 auto;padding-block:28px 48px}
-h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
-h1{font-size:2rem;font-weight:700;letter-spacing:-.01em}
-h2{font-size:1.35rem;font-weight:700;margin-bottom:12px}
-h3{font-size:1.05rem;font-weight:500}
-.sub{color:var(--muted);margin:4px 0 20px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:24px}
-.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:500 14px var(--body);color:var(--muted);cursor:pointer}
-.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.board{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
-.col{min-width:0;display:flex;flex-direction:column;gap:8px}
-.colhead{display:flex;justify-content:space-between;align-items:baseline;font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:4px 2px;border-bottom:2px solid var(--line)}
-.colhead b{font-variant-numeric:tabular-nums;color:var(--fg)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
-.card .top{display:flex;justify-content:space-between;gap:8px}
-.card .amt{font:500 13px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- Login ---------- */
+.auth{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.auth-brand{position:relative;overflow:hidden;padding:48px clamp(16px,6vw,72px);display:flex;flex-direction:column;justify-content:center;gap:22px;background:var(--surface);border-right:1px solid var(--line)}
+.auth-brand h1{font-size:clamp(2.8rem,7vw,5.2rem);font-weight:800;line-height:.95}
+.auth-brand h1 span{color:var(--accent)}
+.auth-brand p{color:var(--muted);max-width:40ch;margin:0;font-size:1.05rem}
+.mark{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:var(--accent-fg);font:800 1.2rem var(--display)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.flow span{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);font:500 12px var(--mono);color:var(--muted);animation:rise .6s both}
+.flow span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.flow span:nth-child(2){animation-delay:.08s}.flow span:nth-child(3){animation-delay:.16s}.flow span:nth-child(4){animation-delay:.24s}.flow span:nth-child(5){animation-delay:.32s}
+.auth-card{display:grid;place-items:center;padding:48px 16px}
+.auth-card form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:16px}
+.auth-card h2{font-size:1.8rem}
+.auth-card .hint{color:var(--muted);margin:-8px 0 4px;font-size:14px}
+.err{color:var(--danger);font-size:14px;min-height:1.2em}
+
+/* ---------- Fields & buttons ---------- */
+.field{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:13px}
+.field small{color:var(--muted);font-weight:400}
+.input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);transition:border-color .15s,background .15s}
+.input:hover{border-color:var(--muted)}
+.input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+textarea.input{min-height:100px;resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-fg);transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.6;cursor:wait}
+.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.ghost:hover{background:var(--surface2);filter:none}
+.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+.danger.armed{background:var(--danger);color:var(--bg);border-color:var(--danger)}
+.icon{width:38px;height:38px;padding:0;border-radius:10px}
+
+/* ---------- App shell ---------- */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1280px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px}
+.top .mark{width:36px;height:36px;border-radius:10px;font-size:.9rem;flex:none}
+nav{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+nav button{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:color .15s,background .15s}
+nav button:hover{color:var(--fg)}
+nav button[aria-selected="true"]{background:var(--surface2);color:var(--fg)}
+.me{display:flex;align-items:center;gap:8px;flex:none}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);font:700 14px var(--display)}
+main.view{max-width:1280px;margin:0 auto;padding:28px 16px 64px}
+.pagehead{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.pagehead h1{font-size:clamp(1.7rem,3.5vw,2.4rem);font-weight:800}
+.pagehead p{margin:4px 0 0;color:var(--muted)}
+
+/* ---------- Stats + funnel ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stat .lbl{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stat .val{font:700 1.7rem var(--display);font-variant-numeric:tabular-nums;margin-top:4px}
+.funnel{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--surface2);margin-bottom:8px}
+.funnel i{display:block;height:100%;background:var(--c);transition:flex-grow .5s ease}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:22px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* ---------- Board ---------- */
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.tools .input{max-width:320px}
+.board{display:grid;grid-template-columns:repeat(5,minmax(240px,1fr));gap:12px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory}
+.col{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;scroll-snap-align:start;transition:border-color .15s,background .15s}
+.col.over{border-color:var(--c);background:color-mix(in srgb,var(--c) 8%,var(--surface))}
+.colhead{display:flex;align-items:center;gap:8px;padding:2px 4px 8px;border-bottom:1px solid var(--line)}
+.colhead::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 20%,transparent)}
+.colhead b{font-weight:700}
+.colhead .n{margin-left:auto;font:500 12px var(--mono);color:var(--muted)}
+.colsum{font:500 12px var(--mono);color:var(--muted);padding:0 4px}
+.cards{display:flex;flex-direction:column;gap:8px;min-height:60px}
+.card{position:relative;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px 14px;cursor:grab;display:flex;flex-direction:column;gap:6px;transition:transform .15s,box-shadow .15s,border-color .15s;animation:rise .25s both}
+.card::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--c)}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--c) 50%,var(--line))}
+.card.dragging{opacity:.4}
+.card .row{display:flex;justify-content:space-between;align-items:start;gap:8px}
+.card .foot{align-items:center}
+.card h3{font-size:1rem;font-weight:700;overflow-wrap:anywhere}
+.card .amt{font:500 13px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
 .card p{margin:0;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
-.chip{display:inline-block;font:500 11px var(--mono);padding:2px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
-.card .acts{display:flex;gap:6px;align-items:center}
-.card select{flex:1;min-width:0;font:13px var(--body);padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
-.x{background:none;border:1px solid var(--line);border-radius:6px;color:var(--muted);cursor:pointer;padding:3px 8px;font-size:12px}
-.x.confirm{border-color:var(--warn);color:var(--warn)}
-.empty{border:1px dashed var(--line);border-radius:8px;padding:12px;color:var(--muted);font-size:13px}
-.totals{display:flex;gap:28px;flex-wrap:wrap;margin-bottom:18px}
-.totals div{font:500 12px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.totals strong{display:block;font:700 1.4rem var(--display);color:var(--fg);letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:760px}
-form .full{grid-column:1/-1}
-label{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:13px}
-label small{color:var(--muted);font-weight:400}
-input,select,textarea{font:15px var(--body);padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);width:100%}
-textarea{min-height:90px;resize:vertical}
-.btn{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:10px 18px;font:600 14px var(--body);cursor:pointer;justify-self:start}
-.msg{font-size:13px;color:var(--ok);align-self:center}
+.chip{display:inline-flex;align-items:center;font:500 11px var(--mono);padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.next{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 9px;font:500 12px var(--mono);color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s}
+.next:hover{color:var(--fg);border-color:var(--c)}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:16px 12px;color:var(--muted);font-size:13px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* ---------- Drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(5,8,16,.5);z-index:40;animation:fade .2s}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);z-index:41;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;animation:slide .25s ease}
+.drawer header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.drawer form{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.drawer footer{display:flex;gap:10px;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--line)}
+.stagepick{display:flex;flex-wrap:wrap;gap:6px}
+.stagepick button{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:6px 12px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.stagepick button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.stagepick button[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--surface2))}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ---------- Brief ---------- */
+.brief{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+.brief form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.brief .full{grid-column:1/-1}
+.tips h3{font-size:1.1rem;margin-bottom:10px}
+.tips ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+
+/* ---------- Paquetes ---------- */
 .packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-.pack{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
-.price{font:700 1.5rem var(--display);font-variant-numeric:tabular-nums}
-.price small{font:400 13px var(--body);color:var(--muted)}
-.pack ul,.doc ul,.doc ol{margin:0;padding-left:18px;color:var(--muted)}
-.pack li,.doc li{margin:3px 0}
-.note{color:var(--muted);font-size:13px;margin-top:14px;max-width:70ch}
-.doc{max-width:70ch;display:flex;flex-direction:column;gap:18px}
-.doc section{display:flex;flex-direction:column;gap:6px}
+.pack{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px;transition:transform .2s,border-color .2s}
+.pack:hover{transform:translateY(-3px);border-color:var(--accent)}
+.pack h3{font-size:1.3rem}
+.pack .price{align-self:start;font:500 13px var(--mono);padding:6px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--muted)}
+.pack ul{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.note{color:var(--muted);font-size:14px;margin-top:16px;max-width:70ch}
+
+/* ---------- Flujo ---------- */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.filters button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 14px;font-weight:600;cursor:pointer;transition:all .15s}
+.filters button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:opacity .2s,transform .2s,border-color .2s}
+.step::before{counter-increment:s;content:counter(s,decimal-leading-zero);font:500 12px var(--mono);color:var(--accent)}
+.step h3{font-size:1.15rem}
+.step p{margin:0;color:var(--muted)}
+.step .who{align-self:start;margin-top:auto;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:4px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.steps.filtering .step:not(.hit){opacity:.25;transform:scale(.98)}
+.steps.filtering .step.hit{border-color:var(--accent)}
+
+/* ---------- Acuerdo ---------- */
+.doc{max-width:72ch;display:flex;flex-direction:column;gap:22px}
+.doc section{display:flex;flex-direction:column;gap:8px}
+.doc h3{font-size:1.2rem}
 .doc p{margin:0}
-.blank{font-family:var(--mono);background:var(--accent-soft);color:var(--accent);padding:0 5px;border-radius:4px}
-.steps{display:grid;gap:10px;max-width:760px;counter-reset:s}
-.step{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
-.step::before{counter-increment:s;content:counter(s);font:700 1.2rem var(--display);color:var(--accent)}
-.step p{margin:2px 0 0;color:var(--muted);font-size:14px}
-.who{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
-.edithead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;max-width:760px;margin-bottom:12px}
-.edithead h2{margin:0}
-[contenteditable="true"]{outline:2px dashed var(--accent);outline-offset:6px;border-radius:4px}
-body{margin:0}
-.login{max-width:360px;margin:12vh auto 0;display:flex;flex-direction:column;gap:14px}
-.login form{grid-template-columns:minmax(0,1fr)}
-.head{display:flex;justify-content:space-between;align-items:start;gap:12px}
-.offline{background:var(--surface);border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:16px}
-@media (max-width:600px){form{grid-template-columns:minmax(0,1fr)}.step{grid-template-columns:28px minmax(0,1fr)}.step .who{grid-column:2}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.doc ul,.doc ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.blank{font-family:var(--mono);font-size:.92em;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);padding:1px 6px;border-radius:5px}
+
+[contenteditable="true"]{outline:2px dashed var(--accent);outline-offset:8px;border-radius:6px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;z-index:60;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;pointer-events:none;transition:all .25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.banner{background:color-mix(in srgb,var(--danger) 12%,var(--surface));border:1px solid var(--danger);color:var(--fg);border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:14px}
+
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+@media (max-width:860px){
+  .auth{grid-template-columns:1fr}
+  .auth-brand{border-right:0;border-bottom:1px solid var(--line);padding-block:40px 32px}
+  .brief{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .who-name{display:none}
+}
+@media (max-width:560px){
+  .brief form,.two{grid-template-columns:1fr}
+  .top-in{flex-wrap:wrap;gap:10px}
+  nav{order:3;flex-basis:100%}
+  .me{margin-left:auto}
+  .board{grid-template-columns:repeat(5,minmax(82%,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<div class="login" id="login" hidden>
-  <h1>Panel de Socios</h1>
-  <form id="lf">
-    <label>Mail<input id="l-email" type="email" autocomplete="username" required></label>
-    <label>Contraseña<input id="l-pass" type="password" autocomplete="current-password" required></label>
-    <button class="btn" type="submit">Entrar</button>
-    <span class="msg" id="l-msg" role="alert" style="color:var(--warn)"></span>
-  </form>
-</div>
-
-<div class="wrap" id="app" hidden>
-  <div class="head">
-    <div><h1>Panel de Socios</h1>
-    <p class="sub">Desarrollo + Marketing. Un solo lugar para clientes, precios y reglas.</p></div>
-    <button class="x" id="logout">Salir</button>
-  </div>
-
-  <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="pipeline" aria-selected="true">Clientes</button>
-    <button role="tab" data-tab="brief" aria-selected="false">Nuevo brief</button>
-    <button role="tab" data-tab="paquetes" aria-selected="false">Paquetes</button>
-    <button role="tab" data-tab="flujo" aria-selected="false">Cómo trabajamos</button>
-    <button role="tab" data-tab="acuerdo" aria-selected="false">Acuerdo</button>
-  </nav>
-
-  <div id="offline" class="offline" hidden>No se pudo conectar con la base. Revisá tu conexión y recargá la página.</div>
-
-  <section id="pipeline" role="tabpanel">
-    <div class="totals">
-      <div>En juego<strong id="t-open">USD 0</strong></div>
-      <div>Por cobrar<strong id="t-due">USD 0</strong></div>
-      <div>Cobrado<strong id="t-paid">USD 0</strong></div>
+<!-- ================= LOGIN ================= -->
+<div class="auth" id="login" hidden>
+  <section class="auth-brand">
+    <div class="mark">PS</div>
+    <h1>Panel de<br><span>Socios</span></h1>
+    <p>Clientes, briefs y acuerdos de la sociedad. Desarrollo y marketing en el mismo lugar.</p>
+    <div class="flow" aria-hidden="true">
+      <span style="--c:var(--s-lead)">Lead</span><span style="--c:var(--s-propuesta)">Propuesta</span><span style="--c:var(--s-desarrollo)">Desarrollo</span><span style="--c:var(--s-entregado)">Entregado</span><span style="--c:var(--s-pagado)">Pagado</span>
     </div>
-    <div class="board" id="board"></div>
   </section>
-
-  <section id="brief" role="tabpanel" hidden>
-    <h2>Brief del cliente</h2>
-    <p class="sub">Lo completa Marketing después de la primera charla. Entra como lead en Clientes.</p>
-    <form id="f">
-      <label>Cliente / negocio<input id="f-cliente" required maxlength="80" placeholder="Ej. Panadería Don Luis"></label>
-      <label>Contacto<input id="f-contacto" maxlength="120" placeholder="WhatsApp, mail o Instagram"></label>
-      <label class="full">¿Qué necesita?<small>Con las palabras del cliente. Qué problema quiere resolver.</small><textarea id="f-necesidad" required maxlength="2000"></textarea></label>
-      <label>Paquete probable<select id="f-paquete"><option>Landing</option><option>Sitio + gestión</option><option>App a medida</option><option>Mantenimiento</option><option>A definir</option></select></label>
-      <label>Presupuesto del cliente (USD)<input id="f-monto" type="number" min="0" step="10" inputmode="numeric"></label>
-      <label>Plazo que pide<input id="f-plazo" maxlength="60" placeholder="Ej. antes de diciembre"></label>
-      <label>¿Cómo llegó?<select id="f-origen"><option>Instagram</option><option>Referido</option><option>Mensaje directo</option><option>Anuncio</option><option>Otro</option></select></label>
-      <label class="full">¿Tiene logo, textos, fotos, dominio?<textarea id="f-material" maxlength="1000" style="min-height:60px"></textarea></label>
-      <button class="btn" type="submit">Cargar lead</button><span class="msg" id="f-msg" role="status"></span>
+  <section class="auth-card">
+    <form id="lf">
+      <h2>Entrar</h2>
+      <p class="hint">Solo para los socios.</p>
+      <label class="field">Mail<input class="input" id="l-email" type="email" autocomplete="username" required></label>
+      <label class="field">Contraseña<input class="input" id="l-pass" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit" id="l-btn">Entrar</button>
+      <div class="err" id="l-msg" role="alert"></div>
     </form>
   </section>
+</div>
 
-  <section id="paquetes" role="tabpanel" hidden>
-    <div class="edithead"><h2>Paquetes</h2><button class="x" data-edit="c-paquetes" hidden>Editar</button></div>
+<!-- ================= APP ================= -->
+<div id="app" hidden>
+  <header class="top"><div class="top-in">
+    <div class="mark">PS</div>
+    <nav role="tablist">
+      <button role="tab" data-tab="clientes" aria-selected="true">Clientes</button>
+      <button role="tab" data-tab="brief" aria-selected="false">Nuevo brief</button>
+      <button role="tab" data-tab="paquetes" aria-selected="false">Paquetes</button>
+      <button role="tab" data-tab="flujo" aria-selected="false">Cómo trabajamos</button>
+      <button role="tab" data-tab="acuerdo" aria-selected="false">Acuerdo</button>
+    </nav>
+    <div class="me">
+      <button class="btn ghost icon" id="theme" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+      <span class="who-name" id="me-name"></span>
+      <div class="avatar" id="me-av"></div>
+      <button class="btn ghost" id="logout">Salir</button>
+    </div>
+  </div></header>
+
+  <!-- Clientes -->
+  <main class="view" id="clientes" role="tabpanel">
+    <div id="banner" class="banner" hidden></div>
+    <div class="pagehead">
+      <div><h1 id="hello">Hola</h1><p>Así viene la sociedad hoy.</p></div>
+      <button class="btn" data-go="brief">+ Nuevo lead</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">Clientes activos</div><div class="val" id="s-act">0</div></div>
+      <div class="stat"><div class="lbl">En juego</div><div class="val" id="s-open">USD 0</div></div>
+      <div class="stat"><div class="lbl">Por cobrar</div><div class="val" id="s-due">USD 0</div></div>
+      <div class="stat"><div class="lbl">Cobrado</div><div class="val" id="s-paid">USD 0</div></div>
+      <div class="stat"><div class="lbl">Tasa de cierre</div><div class="val" id="s-rate">0%</div></div>
+    </div>
+    <div class="funnel" id="funnel"></div>
+    <div class="legend" id="legend"></div>
+    <div class="tools">
+      <input class="input" id="search" type="search" placeholder="Buscar cliente, contacto, paquete…" aria-label="Buscar">
+    </div>
+    <div class="board" id="board"></div>
+  </main>
+
+  <!-- Brief -->
+  <main class="view" id="brief" role="tabpanel" hidden>
+    <div class="pagehead"><div><h1>Nuevo brief</h1><p>Se completa después de la primera charla con el cliente. Entra como lead.</p></div></div>
+    <div class="brief">
+      <div class="panel">
+        <form id="f">
+          <label class="field">Cliente / negocio<input class="input" id="f-cliente" required maxlength="80" placeholder="Ej. Panadería Don Luis"></label>
+          <label class="field">Contacto<input class="input" id="f-contacto" maxlength="120" placeholder="WhatsApp, mail o Instagram"></label>
+          <label class="field full">¿Qué necesita?<small>Con las palabras del cliente: qué problema quiere resolver.</small><textarea class="input" id="f-necesidad" required maxlength="2000"></textarea></label>
+          <label class="field">Paquete probable<select class="input" id="f-paquete"><option>Landing</option><option>Sitio + gestión</option><option>App a medida</option><option>Mantenimiento</option><option selected>A definir</option></select></label>
+          <label class="field">Presupuesto del cliente (USD)<input class="input" id="f-monto" type="number" min="0" step="10" inputmode="numeric" placeholder="Opcional"></label>
+          <label class="field">Plazo que pide<input class="input" id="f-plazo" maxlength="60" placeholder="Ej. antes de diciembre"></label>
+          <label class="field">¿Cómo llegó?<select class="input" id="f-origen"><option>Instagram</option><option>Referido</option><option>Mensaje directo</option><option>Anuncio</option><option>Otro</option></select></label>
+          <label class="field full">Notas y material<small>¿Tiene logo, textos, fotos, dominio?</small><textarea class="input" id="f-material" maxlength="2000" style="min-height:70px"></textarea></label>
+          <div class="full"><button class="btn" type="submit">Cargar lead</button></div>
+        </form>
+      </div>
+      <aside class="panel tips">
+        <h3>Preguntas para la primera charla</h3>
+        <ol>
+          <li>¿Qué querés que la gente haga en tu web?</li>
+          <li>¿Quién es tu cliente ideal?</li>
+          <li>¿Qué webs de la competencia te gustan y por qué?</li>
+          <li>¿Tenés logo, fotos y textos, o hay que hacerlos?</li>
+          <li>¿Para cuándo lo necesitás y cuánto pensabas invertir?</li>
+        </ol>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Paquetes -->
+  <main class="view" id="paquetes" role="tabpanel" hidden>
+    <div class="pagehead"><div><h1>Paquetes</h1><p>Lo que ofrecemos. Precios a definir entre los dos.</p></div><button class="btn ghost" data-edit="c-paquetes">Editar</button></div>
     <div id="c-paquetes">
-    <div class="packs">
-      <article class="pack"><h3>Landing</h3><div class="price">USD 250–400</div>
-        <ul><li>Una página, hasta 5 secciones</li><li>Botón de WhatsApp y formulario</li><li>Dominio y publicación incluidos</li><li>Entrega en 5–7 días</li></ul></article>
-      <article class="pack"><h3>Sitio + gestión</h3><div class="price">USD 600–1.000</div>
-        <ul><li>Hasta 6 páginas</li><li>Turnos, catálogo o pedidos online</li><li>Panel para que el cliente edite</li><li>Entrega en 2–3 semanas</li></ul></article>
-      <article class="pack"><h3>App a medida</h3><div class="price">desde USD 1.500</div>
-        <ul><li>Web app o sistema interno</li><li>Usuarios, base de datos, reportes</li><li>Precio cerrado tras el brief</li><li>Entrega por etapas</li></ul></article>
-      <article class="pack"><h3>Mantenimiento</h3><div class="price">USD 40–80 <small>/ mes</small></div>
-        <ul><li>Hosting, dominio y copias</li><li>Cambios chicos mensuales</li><li>Soporte por WhatsApp</li><li>Se ofrece en cada entrega</li></ul></article>
+      <div class="packs">
+        <article class="pack"><h3>Landing</h3><span class="price">Precio a definir</span>
+          <ul><li>Una página, hasta 5 secciones</li><li>Botón de WhatsApp y formulario</li><li>Dominio y publicación incluidos</li><li>Entrega en 5–7 días</li></ul></article>
+        <article class="pack"><h3>Sitio + gestión</h3><span class="price">Precio a definir</span>
+          <ul><li>Hasta 6 páginas</li><li>Turnos, catálogo o pedidos online</li><li>Panel para que el cliente edite</li><li>Entrega en 2–3 semanas</li></ul></article>
+        <article class="pack"><h3>App a medida</h3><span class="price">Precio a definir</span>
+          <ul><li>Web app o sistema interno</li><li>Usuarios, base de datos, reportes</li><li>Precio cerrado tras el brief</li><li>Entrega por etapas</li></ul></article>
+        <article class="pack"><h3>Mantenimiento</h3><span class="price">Precio a definir / mes</span>
+          <ul><li>Hosting, dominio y copias</li><li>Cambios chicos mensuales</li><li>Soporte por WhatsApp</li><li>Se ofrece en cada entrega</li></ul></article>
+      </div>
+      <p class="note">Siempre 50% de anticipo antes de empezar y 50% al entregar.</p>
     </div>
-    <p class="note">Precios orientativos para arrancar. Siempre 50% de anticipo antes de empezar y 50% al entregar. Ajustarlos después de los primeros 3 proyectos según las horas reales.</p>
-    </div>
-  </section>
+  </main>
 
-  <section id="flujo" role="tabpanel" hidden>
-    <div class="edithead"><h2>Cómo trabajamos</h2><button class="x" data-edit="c-flujo" hidden>Editar</button></div>
+  <!-- Flujo -->
+  <main class="view" id="flujo" role="tabpanel" hidden>
+    <div class="pagehead"><div><h1>Cómo trabajamos</h1><p>De la primera charla al testimonio. Filtrá por quién se encarga.</p></div><button class="btn ghost" data-edit="c-flujo">Editar</button></div>
+    <div class="filters" id="who-filter">
+      <button aria-pressed="true" data-who="">Todos</button>
+      <button aria-pressed="false" data-who="Marketing">Marketing</button>
+      <button aria-pressed="false" data-who="Desarrollo">Desarrollo</button>
+      <button aria-pressed="false" data-who="Ambos">Ambos</button>
+    </div>
     <div class="steps" id="c-flujo">
-      <div class="step"><div><h3>Conseguir el lead</h3><p>Contenido, mensajes directos, referidos. Se carga el brief.</p></div><span class="who">Marketing</span></div>
-      <div class="step"><div><h3>Precio y plazo</h3><p>Se revisa el brief y se responde en 48 h con alcance, precio y fecha.</p></div><span class="who">Desarrollo</span></div>
-      <div class="step"><div><h3>Cierre y anticipo</h3><p>Se envía la propuesta y se cobra el 50%. Sin anticipo no se empieza.</p></div><span class="who">Marketing</span></div>
-      <div class="step"><div><h3>Construcción</h3><p>Demo a mitad de camino para que el cliente la vea y opine.</p></div><span class="who">Desarrollo</span></div>
-      <div class="step"><div><h3>Entrega y cobro final</h3><p>Se publica, se cobra el resto y se ofrece mantenimiento mensual.</p></div><span class="who">Ambos</span></div>
-      <div class="step"><div><h3>Testimonio y contenido</h3><p>Se pide reseña y se publica el caso en redes y en el portfolio.</p></div><span class="who">Marketing</span></div>
+      <div class="step"><h3>Conseguir el lead</h3><p>Contenido, mensajes directos y referidos. Se carga el brief.</p><span class="who">Marketing</span></div>
+      <div class="step"><h3>Precio y plazo</h3><p>Se revisa el brief y se responde en 48 h con alcance, precio y fecha.</p><span class="who">Desarrollo</span></div>
+      <div class="step"><h3>Cierre y anticipo</h3><p>Se envía la propuesta y se cobra el 50%. Sin anticipo no se empieza.</p><span class="who">Marketing</span></div>
+      <div class="step"><h3>Construcción</h3><p>Demo a mitad de camino para que el cliente la vea y opine.</p><span class="who">Desarrollo</span></div>
+      <div class="step"><h3>Entrega y cobro final</h3><p>Se publica, se cobra el resto y se ofrece mantenimiento mensual.</p><span class="who">Ambos</span></div>
+      <div class="step"><h3>Testimonio y contenido</h3><p>Se pide reseña y se publica el caso en redes y en el portfolio.</p><span class="who">Marketing</span></div>
     </div>
-  </section>
+  </main>
 
-  <section id="acuerdo" role="tabpanel" hidden>
-    <div class="edithead"><h2>Acuerdo entre socios</h2><button class="x" data-edit="c-acuerdo" hidden>Editar</button></div>
+  <!-- Acuerdo -->
+  <main class="view" id="acuerdo" role="tabpanel" hidden>
+    <div class="pagehead"><div><h1>Acuerdo entre socios</h1><p>Borrador. Lo resaltado se completa juntos.</p></div><button class="btn ghost" data-edit="c-acuerdo">Editar</button></div>
     <div class="doc" id="c-acuerdo">
-      <p>Base para charlar y firmar. Los campos marcados se completan juntos.</p>
       <section><h3>Partes y roles</h3>
         <p><span class="blank">Socio A</span> se ocupa del desarrollo: sitios, apps, software, soporte técnico y presupuestos técnicos.</p>
         <p><span class="blank">Socio B</span> se ocupa del marketing y las ventas: captación, atención comercial, cierre, cobros y marca.</p></section>
@@ -192,97 +353,232 @@ body{margin:0}
         <li>Los mantenimientos activos se siguen repartiendo por <span class="blank">3 meses</span> o se compran por acuerdo.</li></ul></section>
       <p class="note">Este borrador no es asesoramiento legal. Si la sociedad crece, conviene formalizarla con un contador.</p>
     </div>
-  </section>
+  </main>
 </div>
+
+<!-- Drawer -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Detalle del cliente">
+  <header><h2 id="d-title">Cliente</h2><button class="btn ghost icon" id="d-close" aria-label="Cerrar">✕</button></header>
+  <form id="df">
+    <div class="field">Etapa<div class="stagepick" id="d-stage"></div></div>
+    <label class="field">Cliente / negocio<input class="input" id="d-cliente" required maxlength="80"></label>
+    <label class="field">Contacto<input class="input" id="d-contacto" maxlength="120"></label>
+    <label class="field">¿Qué necesita?<textarea class="input" id="d-necesidad" maxlength="2000"></textarea></label>
+    <div class="two">
+      <label class="field">Paquete<select class="input" id="d-paquete"><option>Landing</option><option>Sitio + gestión</option><option>App a medida</option><option>Mantenimiento</option><option>A definir</option></select></label>
+      <label class="field">Monto (USD)<input class="input" id="d-monto" type="number" min="0" step="10"></label>
+      <label class="field">Plazo<input class="input" id="d-plazo" maxlength="60"></label>
+      <label class="field">Origen<select class="input" id="d-origen"><option>Instagram</option><option>Referido</option><option>Mensaje directo</option><option>Anuncio</option><option>Otro</option></select></label>
+    </div>
+    <label class="field">Notas y material<textarea class="input" id="d-material" maxlength="2000"></textarea></label>
+  </form>
+  <footer><button class="btn danger" id="d-del" type="button">Borrar</button><button class="btn" id="d-save" type="submit" form="df">Guardar cambios</button></footer>
+</aside>
+<div class="toast" id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script>
-// Datos del proyecto de Supabase (Project Settings → API). La anon key es pública por diseño;
+// Datos del proyecto de Supabase (Project Settings → API). La publishable key es pública por diseño;
 // lo que protege los datos son las políticas de supabase.sql.
 const SUPABASE_URL="https://zeqgzzsnrlqjpuyarhwg.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_dK8sJBMm6uaI6qPysQS2Og_Z8hKZND3";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const q=async p=>{const {data,error}=await p;if(error)throw error;return data};
+
+const NAMES={"romnmarti@gmail.com":"Román","brisasosa335@gmail.com":"Brisa"};
 const STAGES=[["lead","Lead"],["propuesta","Propuesta"],["desarrollo","En desarrollo"],["entregado","Entregado"],["pagado","Pagado"]];
+const stageName=k=>(STAGES.find(s=>s[0]===k)||STAGES[0])[1];
 const $=id=>document.getElementById(id);
 const fmt=n=>"USD "+(Math.round(n)||0).toLocaleString("es-AR");
-let leads=[];
-
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  document.querySelectorAll("[role=tabpanel]").forEach(p=>p.hidden=p.id!==b.dataset.tab);
-  try{localStorage.setItem("tab",b.dataset.tab)}catch(e){}
-});
-try{const t=localStorage.getItem("tab");t&&document.querySelector(`[data-tab="${t}"]`)?.click()}catch(e){}
-
+const cvar=k=>`var(--s-${k})`;
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 
-function render(){
-  const board=$("board");board.replaceChildren();
-  let open=0,due=0,paid=0;
-  for(const l of leads){const m=+l.monto||0;
-    if(l.etapa==="pagado")paid+=m;else if(l.etapa==="entregado")due+=m;else open+=m;}
-  $("t-open").textContent=fmt(open);$("t-due").textContent=fmt(due);$("t-paid").textContent=fmt(paid);
-  for(const [key,name] of STAGES){
-    const items=leads.filter(l=>(l.etapa||"lead")===key);
-    const c=el("div","col"),h=el("div","colhead");h.append(name,el("b",null,items.length));c.append(h);
-    if(!items.length)c.append(el("div","empty",key==="lead"?"Sin leads todavía. Cargalos desde Nuevo brief.":"Vacío"));
-    for(const l of items){
-      const card=el("div","card"),top=el("div","top");
-      top.append(el("h3",null,l.cliente),el("span","amt",l.monto?fmt(l.monto):"—"));
-      card.append(top);
-      const meta=el("div");meta.append(el("span","chip",l.paquete||"A definir"));card.append(meta);
-      if(l.necesidad)card.append(el("p",null,l.necesidad.length>140?l.necesidad.slice(0,140)+"…":l.necesidad));
-      const info=[l.contacto,l.plazo&&"Plazo: "+l.plazo,l.origen&&"Vía "+l.origen].filter(Boolean).join(" · ");
-      if(info)card.append(el("p",null,info));
-      const acts=el("div","acts"),sel=el("select");sel.setAttribute("aria-label","Mover a etapa");
-      for(const [k,n] of STAGES){const o=el("option",null,n);o.value=k;o.selected=k===(l.etapa||"lead");sel.append(o)}
-      sel.onchange=()=>q(sb.from("leads").update({etapa:sel.value}).eq("id",l.id)).then(loadLeads,fail);
-      const del=el("button","x","Borrar");
-      del.onclick=()=>{if(del.classList.contains("confirm")){q(sb.from("leads").delete().eq("id",l.id)).then(loadLeads,fail)}
-        else{del.classList.add("confirm");del.textContent="¿Seguro?";setTimeout(()=>{del.classList.remove("confirm");del.textContent="Borrar"},3000)}};
-      acts.append(sel,del);card.append(acts);c.append(card);
-    }
-    board.append(c);
-  }
-}
-function fail(e){console.error(e);$("offline").hidden=false;$("offline").textContent="No se pudo guardar. Probá de nuevo; si sigue, cerrá sesión y volvé a entrar."}
-render();
+let leads=[],search="",dragId=null,openId=null;
 
+/* ---------- UI helpers ---------- */
+let toastT;
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2400)}
+function fail(e){console.error(e);toast("No se pudo guardar. Probá de nuevo.")}
+function countTo(node,to,f){
+  const from=+node.dataset.v||0;node.dataset.v=to;
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches||from===to){node.textContent=f(to);return}
+  const t0=performance.now();
+  const step=t=>{const p=Math.min(1,(t-t0)/500),e=1-Math.pow(1-p,3);node.textContent=f(from+(to-from)*e);if(p<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);
+}
+const asInt=v=>String(Math.round(v)),asPct=v=>Math.round(v)+"%";
+
+/* ---------- Tabs ---------- */
+function go(tab){
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  document.querySelectorAll("main.view").forEach(v=>v.hidden=v.id!==tab);
+  try{localStorage.setItem("tab",tab)}catch(e){}
+  scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+try{const t=localStorage.getItem("tab");if(t&&$(t))go(t)}catch(e){}
+
+/* ---------- Theme ---------- */
+try{const th=localStorage.getItem("theme");if(th)document.documentElement.dataset.theme=th}catch(e){}
+$("theme").onclick=()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");
+  const nx=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=nx;
+  try{localStorage.setItem("theme",nx)}catch(e){}
+};
+
+/* ---------- Clientes ---------- */
+function render(){
+  let open=0,due=0,paid=0,closed=0;
+  const counts=Object.fromEntries(STAGES.map(s=>[s[0],0]));
+  for(const l of leads){const m=+l.monto||0;counts[l.etapa]=(counts[l.etapa]||0)+1;
+    if(l.etapa==="pagado")paid+=m;else if(l.etapa==="entregado")due+=m;else open+=m;
+    if(["desarrollo","entregado","pagado"].includes(l.etapa))closed++;}
+  countTo($("s-act"),leads.length-counts.pagado,asInt);
+  countTo($("s-open"),open,fmt);countTo($("s-due"),due,fmt);countTo($("s-paid"),paid,fmt);
+  countTo($("s-rate"),leads.length?closed/leads.length*100:0,asPct);
+
+  $("funnel").replaceChildren(...STAGES.map(([k,n])=>{const i=el("i");i.style.setProperty("--c",cvar(k));i.style.flexGrow=counts[k];i.title=n+": "+counts[k];return i}));
+  $("legend").replaceChildren(...STAGES.map(([k,n])=>{const s=el("span",null,`${n} · ${counts[k]}`);s.style.setProperty("--c",cvar(k));return s}));
+
+  const s=search.toLowerCase();
+  const visible=leads.filter(l=>!s||[l.cliente,l.contacto,l.paquete,l.necesidad,l.origen].join(" ").toLowerCase().includes(s));
+  const board=$("board");board.replaceChildren();
+  STAGES.forEach(([key,name],idx)=>{
+    const items=visible.filter(l=>l.etapa===key);
+    const col=el("section","col");col.style.setProperty("--c",cvar(key));
+    const head=el("div","colhead");head.append(el("b",null,name),el("span","n",items.length));
+    const sum=items.reduce((a,l)=>a+(+l.monto||0),0);
+    col.append(head);if(sum)col.append(el("div","colsum",fmt(sum)));
+    const list=el("div","cards");
+    if(!items.length){
+      const e=el("div","empty",s?"Sin resultados":key==="lead"?"Todavía no hay leads.":"Arrastrá clientes acá");
+      if(key==="lead"&&!s){const b=el("button","btn ghost","+ Cargar el primero");b.onclick=()=>go("brief");e.append(b)}
+      list.append(e);
+    }
+    for(const l of items){
+      const c=el("article","card");c.draggable=true;c.tabIndex=0;c.setAttribute("role","button");c.setAttribute("aria-label","Abrir "+l.cliente);
+      const r=el("div","row");r.append(el("h3",null,l.cliente),el("span","amt",l.monto?fmt(l.monto):""));
+      c.append(r);
+      if(l.necesidad)c.append(el("p",null,l.necesidad.length>110?l.necesidad.slice(0,110)+"…":l.necesidad));
+      const foot=el("div","row foot");foot.append(el("span","chip",l.paquete||"A definir"));
+      if(idx<STAGES.length-1){const nx=el("button","next",STAGES[idx+1][1]+" →");nx.title="Pasar a "+STAGES[idx+1][1];
+        nx.onclick=e=>{e.stopPropagation();move(l.id,STAGES[idx+1][0])};foot.append(nx)}
+      c.append(foot);
+      c.onclick=()=>openDrawer(l.id);
+      c.onkeydown=e=>{if(e.target===c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDrawer(l.id)}};
+      c.ondragstart=e=>{dragId=l.id;c.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",l.id)};
+      c.ondragend=()=>{dragId=null;c.classList.remove("dragging")};
+      list.append(c);
+    }
+    col.append(list);
+    col.ondragover=e=>{if(!dragId)return;e.preventDefault();col.classList.add("over")};
+    col.ondragleave=e=>{if(!col.contains(e.relatedTarget))col.classList.remove("over")};
+    col.ondrop=e=>{e.preventDefault();col.classList.remove("over");if(dragId)move(dragId,key)};
+    board.append(col);
+  });
+}
+$("search").oninput=e=>{search=e.target.value.trim();render()};
+
+async function move(id,etapa){
+  const l=leads.find(x=>x.id===id);if(!l||l.etapa===etapa)return;
+  const prev=l.etapa;l.etapa=etapa;render();toast(`${l.cliente} → ${stageName(etapa)}`);
+  try{await q(sb.from("leads").update({etapa}).eq("id",id))}catch(e){l.etapa=prev;render();fail(e)}
+}
+
+/* ---------- Drawer ---------- */
+const DF=["cliente","contacto","necesidad","paquete","monto","plazo","origen","material"];
+let dStage="lead";
+function paintStages(){
+  $("d-stage").replaceChildren(...STAGES.map(([k,n])=>{const b=el("button",null,n);b.type="button";b.style.setProperty("--c",cvar(k));
+    b.setAttribute("aria-pressed",k===dStage);b.onclick=()=>{dStage=k;paintStages()};return b}));
+}
+function openDrawer(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;openId=id;
+  $("d-title").textContent=l.cliente;
+  for(const f of DF)$("d-"+f).value=l[f]??"";
+  dStage=l.etapa;paintStages();
+  $("d-del").classList.remove("armed");$("d-del").textContent="Borrar";
+  $("scrim").hidden=$("drawer").hidden=false;$("d-cliente").focus();
+}
+function closeDrawer(){openId=null;$("scrim").hidden=$("drawer").hidden=true}
+$("d-close").onclick=closeDrawer;$("scrim").onclick=closeDrawer;
+addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closeDrawer()});
+$("df").addEventListener("submit",async e=>{
+  e.preventDefault();const id=openId;
+  const v=Object.fromEntries(DF.map(f=>[f,$("d-"+f).value.trim()]));v.monto=+v.monto||0;v.etapa=dStage;
+  $("d-save").disabled=true;
+  try{await q(sb.from("leads").update(v).eq("id",id));Object.assign(leads.find(x=>x.id===id)||{},v);render();closeDrawer();toast("Cambios guardados")}
+  catch(err){fail(err)}
+  $("d-save").disabled=false;
+});
+$("d-del").onclick=async()=>{
+  const b=$("d-del");
+  if(!b.classList.contains("armed")){b.classList.add("armed");b.textContent="¿Seguro? Tocá de nuevo";setTimeout(()=>{b.classList.remove("armed");b.textContent="Borrar"},3500);return}
+  const id=openId;
+  try{await q(sb.from("leads").delete().eq("id",id));leads=leads.filter(x=>x.id!==id);render();closeDrawer();toast("Cliente borrado")}catch(e){fail(e)}
+};
+
+/* ---------- Brief ---------- */
 $("f").addEventListener("submit",async e=>{
   e.preventDefault();
   const v=id=>$("f-"+id).value.trim();
+  const btn=e.target.querySelector("button[type=submit]");btn.disabled=true;
   try{
     await q(sb.from("leads").insert({cliente:v("cliente"),contacto:v("contacto"),necesidad:v("necesidad"),paquete:v("paquete"),
       monto:+v("monto")||0,plazo:v("plazo"),origen:v("origen"),material:v("material")}));
-    loadLeads();
-    $("f").reset();$("f-msg").textContent="Lead cargado en Clientes.";setTimeout(()=>$("f-msg").textContent="",4000);
+    $("f").reset();await loadLeads();go("clientes");toast("Lead cargado");
   }catch(err){fail(err)}
+  btn.disabled=false;
 });
 
+/* ---------- Flujo filter ---------- */
+document.querySelectorAll("#who-filter button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#who-filter button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  const w=b.dataset.who,steps=$("c-flujo");steps.classList.toggle("filtering",!!w);
+  steps.querySelectorAll(".step").forEach(s=>s.classList.toggle("hit",!!w&&s.querySelector(".who")?.textContent.trim()===w));
+});
+
+/* ---------- Editable texts (contenido table) ---------- */
+document.querySelectorAll("[data-edit]").forEach(btn=>{
+  const box=$(btn.dataset.edit);
+  btn.onclick=async()=>{
+    if(box.contentEditable!=="true"){box.contentEditable="true";box.focus();btn.textContent="Guardar";btn.classList.remove("ghost");return}
+    btn.disabled=true;
+    try{await q(sb.from("contenido").upsert({id:btn.dataset.edit,html:clean(box.innerHTML),actualizado:new Date().toISOString()}));
+      box.contentEditable="false";btn.textContent="Editar";btn.classList.add("ghost");toast("Texto guardado")}catch(e){fail(e)}
+    btn.disabled=false;
+  };
+});
+// Strip anything executable before storing or showing shared HTML
+function clean(html){
+  const t=document.createElement("template");t.innerHTML=html;
+  t.content.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n=>n.remove());
+  t.content.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{
+    if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value)||a.name==="contenteditable")n.removeAttribute(a.name)}));
+  return t.innerHTML;
+}
+
+/* ---------- Data ---------- */
 async function loadLeads(){
-  try{leads=await q(sb.from("leads").select("*").order("creado",{ascending:false}));$("offline").hidden=true;render()}
-  catch(e){$("offline").hidden=false}
+  try{leads=await q(sb.from("leads").select("*").order("creado",{ascending:false}));$("banner").hidden=true;render()}
+  catch(e){$("banner").hidden=false;$("banner").textContent="No se pudo conectar con la base. Revisá tu conexión y recargá la página."}
 }
 async function loadContenido(){
   try{for(const r of await q(sb.from("contenido").select("id,html"))){
     const box=$(r.id);if(box&&box.contentEditable!=="true")box.innerHTML=clean(r.html)}}catch(e){}
 }
-document.querySelectorAll("[data-edit]").forEach(btn=>{
-  const box=$(btn.dataset.edit);btn.hidden=false;
-  btn.onclick=async()=>{
-    if(box.contentEditable!=="true"){box.contentEditable="true";box.focus();btn.textContent="Guardar";return}
-    btn.disabled=true;
-    try{await q(sb.from("contenido").upsert({id:btn.dataset.edit,html:clean(box.innerHTML),actualizado:new Date().toISOString()}));
-      box.contentEditable="false";btn.textContent="Editar"}catch(e){fail(e)}
-    btn.disabled=false;
-  };
-});
 
+/* ---------- Auth ---------- */
 let live=null;
-async function show(session){
+function show(session){
   $("login").hidden=!!session;$("app").hidden=!session;
-  if(!session){live&&sb.removeChannel(live);live=null;return}
+  if(!session){live&&sb.removeChannel(live);live=null;closeDrawer();return}
+  const mail=session.user.email||"",name=NAMES[mail]||mail.split("@")[0];
+  $("me-name").textContent=name;$("me-av").textContent=name[0]?.toUpperCase()||"?";
+  const h=new Date().getHours();
+  $("hello").textContent=(h<12?"Buen día":h<20?"Buenas tardes":"Buenas noches")+", "+name;
   if(live)return;
   loadLeads();loadContenido();
   live=sb.channel("cambios")
@@ -295,19 +591,13 @@ sb.auth.onAuthStateChange((_ev,session)=>setTimeout(()=>show(session)));
 
 $("lf").addEventListener("submit",async e=>{
   e.preventDefault();$("l-msg").textContent="";
+  const b=$("l-btn");b.disabled=true;b.textContent="Entrando…";
   const {error}=await sb.auth.signInWithPassword({email:$("l-email").value.trim(),password:$("l-pass").value});
+  b.disabled=false;b.textContent="Entrar";
   if(error)$("l-msg").textContent="Mail o contraseña incorrectos.";
 });
 $("logout").onclick=()=>sb.auth.signOut();
-
-// Strip anything executable before storing or showing shared HTML
-function clean(html){
-  const t=document.createElement("template");t.innerHTML=html;
-  t.content.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n=>n.remove());
-  t.content.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{
-    if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value)||a.name==="contenteditable")n.removeAttribute(a.name)}));
-  return t.innerHTML;
-}
+render();
 </script>
 </body>
 </html>

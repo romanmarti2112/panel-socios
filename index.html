@@ -142,6 +142,23 @@ main.view{max-width:1280px;margin:0 auto;padding:28px 16px 64px}
 .tips h3{font-size:1.1rem;margin-bottom:10px}
 .tips ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
 
+/* ---------- Sitios ---------- */
+a.btn{text-decoration:none}
+.stat-inline{font:500 13px var(--mono);color:var(--muted)}
+.addsite{display:grid;grid-template-columns:1.2fr 1.6fr 1fr .8fr auto;gap:12px;align-items:end;margin-bottom:16px}
+.sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.site{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;transition:transform .15s,border-color .15s;animation:rise .25s both}
+.site:hover{transform:translateY(-2px);border-color:var(--accent)}
+.site .row{display:flex;justify-content:space-between;align-items:start;gap:8px}
+.site h3{font-size:1.05rem;overflow-wrap:anywhere}
+.site a.link{font:500 13px var(--mono);color:var(--accent);text-decoration:none;overflow-wrap:anywhere}
+.site a.link:hover{text-decoration:underline}
+.site .meta{color:var(--muted);font-size:13px}
+.site .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.site .acts .btn{padding:7px 12px;font-size:13px}
+@media (max-width:860px){.addsite{grid-template-columns:1fr 1fr}.addsite .btn{grid-column:1/-1}}
+@media (max-width:560px){.addsite{grid-template-columns:1fr}}
+
 /* ---------- Paquetes ---------- */
 .packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
 .pack{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px;transition:transform .2s,border-color .2s}
@@ -228,6 +245,7 @@ main.view{max-width:1280px;margin:0 auto;padding:28px 16px 64px}
     <nav role="tablist">
       <button role="tab" data-tab="clientes" aria-selected="true">Clientes</button>
       <button role="tab" data-tab="brief" aria-selected="false">Nuevo brief</button>
+      <button role="tab" data-tab="sitios" aria-selected="false">Sitios</button>
       <button role="tab" data-tab="paquetes" aria-selected="false">Paquetes</button>
       <button role="tab" data-tab="flujo" aria-selected="false">Cómo trabajamos</button>
       <button role="tab" data-tab="acuerdo" aria-selected="false">Acuerdo</button>
@@ -290,6 +308,22 @@ main.view{max-width:1280px;margin:0 auto;padding:28px 16px 64px}
         </ol>
       </aside>
     </div>
+  </main>
+
+  <!-- Sitios -->
+  <main class="view" id="sitios" role="tabpanel" hidden>
+    <div class="pagehead"><div><h1>Sitios</h1><p>Todo lo que publicamos, en un solo lugar.</p></div>
+      <span class="stat-inline" id="sitios-n">0 sitios</span></div>
+    <form class="panel addsite" id="sf">
+      <label class="field">Nombre<input class="input" id="s-nombre" required maxlength="80" placeholder="Ej. Landing Panadería"></label>
+      <label class="field">URL<input class="input" id="s-url" type="url" required maxlength="300" placeholder="https://..."></label>
+      <label class="field">Cliente<input class="input" id="s-cliente" maxlength="80" placeholder="Opcional" list="clientes-list"></label>
+      <label class="field">Tipo<select class="input" id="s-tipo"><option>Landing</option><option>Sitio</option><option>App</option><option>Interno</option><option>Demo</option></select></label>
+      <button class="btn" type="submit">Agregar</button>
+    </form>
+    <datalist id="clientes-list"></datalist>
+    <div class="tools"><input class="input" id="s-search" type="search" placeholder="Buscar sitio o cliente…" aria-label="Buscar sitios"></div>
+    <div class="sites" id="sites"></div>
   </main>
 
   <!-- Paquetes -->
@@ -534,6 +568,51 @@ $("f").addEventListener("submit",async e=>{
   btn.disabled=false;
 });
 
+/* ---------- Sitios ---------- */
+let sitios=[],sSearch="";
+const safeUrl=u=>/^https?:\/\//i.test(u)?u:"";
+function renderSites(){
+  $("sitios-n").textContent=sitios.length+(sitios.length===1?" sitio":" sitios");
+  $("clientes-list").replaceChildren(...[...new Set(leads.map(l=>l.cliente))].map(c=>{const o=el("option");o.value=c;return o}));
+  const s=sSearch.toLowerCase();
+  const list=sitios.filter(x=>!s||[x.nombre,x.url,x.cliente,x.tipo].join(" ").toLowerCase().includes(s));
+  if(!list.length){$("sites").replaceChildren(el("div","empty",s?"Sin resultados":"Todavía no cargaron sitios. Agregá el primero arriba."));return}
+  $("sites").replaceChildren(...list.map(x=>{
+    const c=el("article","site"),r=el("div","row");
+    const chip=el("span","chip",x.tipo||"Sitio");chip.style.setProperty("--c","var(--accent)");
+    r.append(el("h3",null,x.nombre),chip);c.append(r);
+    const url=safeUrl(x.url);
+    const a=el("a","link",url.replace(/^https?:\/\//,"").replace(/\/$/,""));a.href=url;a.target="_blank";a.rel="noopener noreferrer";c.append(a);
+    if(x.cliente)c.append(el("div","meta","Cliente: "+x.cliente));
+    const acts=el("div","acts");
+    const open=el("a","btn","Abrir");open.href=url;open.target="_blank";open.rel="noopener noreferrer";
+    const cp=el("button","btn ghost","Copiar");cp.type="button";
+    cp.onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("URL copiada")}catch(e){toast("No se pudo copiar")}};
+    const del=el("button","btn danger","Borrar");del.type="button";
+    del.onclick=async()=>{
+      if(!del.classList.contains("armed")){del.classList.add("armed");del.textContent="¿Seguro?";setTimeout(()=>{del.classList.remove("armed");del.textContent="Borrar"},3500);return}
+      try{await q(sb.from("sitios").delete().eq("id",x.id));sitios=sitios.filter(y=>y.id!==x.id);renderSites();toast("Sitio borrado")}catch(e){fail(e)}
+    };
+    acts.append(open,cp,del);c.append(acts);return c;
+  }));
+}
+$("s-search").oninput=e=>{sSearch=e.target.value.trim();renderSites()};
+$("sf").addEventListener("submit",async e=>{
+  e.preventDefault();
+  let url=$("s-url").value.trim();
+  if(!safeUrl(url)){toast("La URL tiene que empezar con https://");return}
+  const btn=e.target.querySelector("button");btn.disabled=true;
+  try{
+    await q(sb.from("sitios").insert({nombre:$("s-nombre").value.trim(),url,cliente:$("s-cliente").value.trim(),tipo:$("s-tipo").value}));
+    $("sf").reset();await loadSitios();toast("Sitio agregado");
+  }catch(err){fail(err)}
+  btn.disabled=false;
+});
+async function loadSitios(){
+  try{sitios=await q(sb.from("sitios").select("*").order("creado",{ascending:false}));renderSites()}
+  catch(e){$("sites").replaceChildren(el("div","empty","Falta crear la tabla de sitios en Supabase."))}
+}
+
 /* ---------- Flujo filter ---------- */
 document.querySelectorAll("#who-filter button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("#who-filter button").forEach(x=>x.setAttribute("aria-pressed",x===b));
@@ -563,7 +642,7 @@ function clean(html){
 
 /* ---------- Data ---------- */
 async function loadLeads(){
-  try{leads=await q(sb.from("leads").select("*").order("creado",{ascending:false}));$("banner").hidden=true;render()}
+  try{leads=await q(sb.from("leads").select("*").order("creado",{ascending:false}));$("banner").hidden=true;render();renderSites()}
   catch(e){$("banner").hidden=false;$("banner").textContent="No se pudo conectar con la base. Revisá tu conexión y recargá la página."}
 }
 async function loadContenido(){
@@ -581,9 +660,10 @@ function show(session){
   const h=new Date().getHours();
   $("hello").textContent=(h<12?"Buen día":h<20?"Buenas tardes":"Buenas noches")+", "+name;
   if(live)return;
-  loadLeads();loadContenido();
+  loadLeads();loadContenido();loadSitios();
   live=sb.channel("cambios")
     .on("postgres_changes",{event:"*",schema:"public",table:"leads"},loadLeads)
+    .on("postgres_changes",{event:"*",schema:"public",table:"sitios"},loadSitios)
     .on("postgres_changes",{event:"*",schema:"public",table:"contenido"},loadContenido)
     .subscribe();
 }

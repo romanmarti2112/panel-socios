@@ -40,3 +40,16 @@ create policy socios_contenido on contenido for all to authenticated using (es_s
 
 -- Cambios en vivo entre los dos
 alter publication supabase_realtime add table leads, contenido;
+
+-- Sitios publicados (agregado después: si ya corriste lo de arriba, corré solo desde acá)
+create table sitios (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null check (length(nombre) <= 80),
+  url text not null check (url ~* '^https?://' and length(url) <= 300),
+  cliente text,
+  tipo text,
+  creado timestamptz not null default now()
+);
+alter table sitios enable row level security;
+create policy socios_sitios on sitios for all to authenticated using (es_socio()) with check (es_socio());
+alter publication supabase_realtime add table sitios;
